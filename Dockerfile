@@ -1,6 +1,6 @@
 FROM alpine:3.20
 
-RUN apk add --no-cache wget tar
+RUN apk add --no-cache wget tar busybox-extras
 
 WORKDIR /app
 
@@ -13,6 +13,8 @@ RUN wget https://github.com/SagerNet/sing-box/releases/download/v1.13.13/sing-bo
 
 COPY config.json .
 
-EXPOSE 8080 8081
+RUN mkdir -p /www && echo "OK" > /www/index.html
 
-CMD ["./sing-box", "run", "-c", "config.json"]
+EXPOSE 8080
+
+CMD sh -c 'busybox httpd -f -p 8081 -h /www & ./sing-box run -c config.json'
