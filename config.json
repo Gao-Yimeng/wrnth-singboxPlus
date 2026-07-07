@@ -1,7 +1,32 @@
 {
   "log": {
+    "disabled": false,
     "level": "info",
     "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns_direct",
+        "address": "223.5.5.5",
+        "strategy": "ipv4_only",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns_proxy",
+        "address": "tls://8.8.8.8",
+        "strategy": "ipv4_only",
+        "detour": "direct"
+      }
+    ],
+    "rules": [
+      {
+        "outbound": ["any"],
+        "server": "dns_direct"
+      }
+    ],
+    "final": "dns_proxy",
+    "strategy": "ipv4_only"
   },
   "inbounds": [
     {
@@ -29,6 +54,28 @@
     {
       "type": "direct",
       "tag": "direct"
+    },
+    {
+      "type": "dns",
+      "tag": "dns-out"
     }
-  ]
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "outbound": "dns-out"
+      }
+    ]
+  },
+  "experimental": {
+    "v2ray_api": {
+      "listen": "127.0.0.1:10085",
+      "stats": {
+        "enabled": true,
+        "stats_inbound_uplink": true,
+        "stats_inbound_downlink": true
+      }
+    }
+  }
 }
