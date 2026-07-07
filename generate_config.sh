@@ -36,7 +36,7 @@ if [ ! -s "$CRT" ] || [ ! -s "$KEY" ]; then
 fi
 
 # ---- Determine protocol type from SING_BOX_PROTOCOL ----
-PROTO="${SING_BOX_PROTOCOL,,}"  # lowercase
+PROTO="$(echo "$SING_BOX_PROTOCOL" | tr '[:upper:]' '[:lower:]')"  # lowercase
 
 # ---- Build config using jq (mirrors Sing-Box-Plus write_config jq pattern) ----
 jq -n \
