@@ -1,23 +1,14 @@
-FROM alpine:3.20
+# Use official sing-box image as base
+FROM sing-box/sing-box:1.13.14-alpine
 
-# Install all dependencies including build tools
-RUN apk add --no-cache wget tar jq socat openssl curl tini
+# Install additional runtime dependencies
+RUN apk add --no-cache socat openssl curl tini jq
 
 # Create non-root user
 RUN addgroup -g 1000 -S appgroup && \
     adduser -u 1000 -S appuser -G appgroup
 
 WORKDIR /app
-
-# Sing-box version
-ARG SING_BOX_VERSION=1.13.14
-
-# Download and install sing-box binary
-RUN wget -q "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
-    && tar -xzf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
-    && mv "sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" ./sing-box \
-    && chmod +x sing-box \
-    && rm -rf "sing-box-${SING_BOX_VERSION}-linux-amd64"*
 
 # Copy application files
 COPY NOTICE.txt .
