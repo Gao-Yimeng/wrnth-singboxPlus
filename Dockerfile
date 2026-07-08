@@ -24,7 +24,7 @@ RUN wget -q "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_
 # ---- Stage 2: Runtime ----
 FROM alpine:3.20 AS runtime
 
-RUN apk add --no-cache socat openssl curl tini
+RUN apk add --no-cache socat openssl curl tini jq
 
 # Create non-root user
 RUN addgroup -g 1000 -S appgroup && \
