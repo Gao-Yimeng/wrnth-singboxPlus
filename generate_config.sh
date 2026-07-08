@@ -39,6 +39,7 @@ fi
 PROTO="$(echo "$SING_BOX_PROTOCOL" | tr '[:upper:]' '[:lower:]')"  # lowercase
 
 # ---- Build config using jq (mirrors Sing-Box-Plus write_config jq pattern) ----
+export ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true
 jq -n \
   --arg port "$SING_BOX_PORT" \
   --arg uuid "$SING_BOX_UUID" \

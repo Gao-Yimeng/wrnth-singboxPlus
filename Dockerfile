@@ -9,7 +9,7 @@ FROM alpine:3.20 AS builder
 
 RUN apk add --no-cache wget tar jq openssl
 
-ARG SING_BOX_VERSION=1.12.24
+ARG SING_BOX_VERSION=1.13.7
 ARG TARGETARCH=amd64
 
 WORKDIR /build
