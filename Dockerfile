@@ -19,6 +19,7 @@ RUN chmod +x /usr/local/bin/sing-box
 COPY NOTICE.txt .
 
 # Copy scripts
+COPY config.json .
 COPY start.sh .
 COPY generate_config.sh .
 RUN chmod +x /app/start.sh /app/generate_config.sh
