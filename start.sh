@@ -1,14 +1,7 @@
 #!/bin/sh
 # ================================================================
 #  start.sh — Entry point for sing-box in Docker container
-#  Inspired by Sing-Box-Plus sbp_bootstrap() + deploy_native() pattern
-#  1. Generate config from env vars
-#  2. Validate config
-#  3. Start health check HTTP server
-#  4. Start sing-box in foreground
 # ================================================================
-
-set -e
 
 echo "[start.sh] Sing-Box Plus Docker Edition starting..."
 echo "[start.sh] SING_BOX_PORT=${SING_BOX_PORT:-31080}"
@@ -33,24 +26,13 @@ fi
 # ---- Step 3: Start health check server on separate port ----
 echo "[start.sh] Step 3/4: Starting health check server on port ${SING_BOX_HEALTH_PORT:-31081}..."
 
-# Background process: simple HTTP health check using socat
-# Pattern inspired by Sing-Box-Plus ensure_deps() — lightweight, no extra packages
-(
-    while true; do
-        echo -e "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{\"status\":\"healthy\",\"port\":${SING_BOX_PORT:-31080}}" | \
-        nc -l -p ${SING_BOX_HEALTH_PORT:-31081} -w 2 >/dev/null 2>&1 || true
-    done
-) &
+# Background: simple TCP echo that responds with HTTP 200
+(while true; do
+    echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nOK" | \
+    nc -l -p ${SING_BOX_HEALTH_PORT:-31081} -w 2 >/dev/null 2>&1 || true
+done) &
 HEALTH_PID=$!
 echo "[start.sh] Health check server PID: $HEALTH_PID"
-
-# Cleanup on exit
-cleanup() {
-    echo "[start.sh] Shutting down..."
-    kill $HEALTH_PID 2>/dev/null || true
-    exit 0
-}
-trap cleanup SIGTERM SIGINT
 
 # ---- Step 4: Start sing-box in foreground ----
 echo "[start.sh] Step 4/4: Starting sing-box..."
