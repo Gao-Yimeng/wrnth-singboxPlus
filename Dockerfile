@@ -1,27 +1,38 @@
-# Use official sing-box image as base
-FROM sing-box/sing-box:1.13.14-alpine
+FROM alpine:3.20
 
-# Install additional runtime dependencies
-RUN apk add --no-cache socat openssl curl tini jq
+# Install dependencies
+RUN apk add --no-cache wget tar jq openssl
 
-# Create non-root user
-RUN addgroup -g 1000 -S appgroup && \
-    adduser -u 1000 -S appuser -G appgroup
+# Sing-box version
+ARG SING_BOX_VERSION=1.13.14
 
 WORKDIR /app
 
-# Copy application files
+# Download sing-box (verbose to catch errors)
+RUN wget "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
+    && ls -la sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz \
+    && tar -xzf sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz \
+    && ls -la sing-box-${SING_BOX_VERSION}-linux-amd64/ \
+    && mv sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box ./sing-box \
+    && chmod +x sing-box \
+    && rm -rf sing-box-${SING_BOX_VERSION}-linux-amd64*
+
+# Copy NOTICE
 COPY NOTICE.txt .
+
+# Copy scripts
 COPY start.sh .
 COPY generate_config.sh .
-
-# Make scripts executable
 RUN chmod +x /app/start.sh /app/generate_config.sh
 
-# Create runtime directories
-RUN mkdir -p /app/data /app/cert && chown -R appuser:appgroup /app
+# Create runtime dirs
+RUN mkdir -p /app/data /app/cert
 
-# Switch to non-root user
+# Create non-root user
+RUN addgroup -g 1000 -S appgroup && \
+    adduser -u 1000 -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+
 USER appuser
 
 # Environment variables
@@ -33,14 +44,10 @@ ENV SING_BOX_HEALTH_PORT=31081
 ENV SING_BOX_REALITY_SERVER=www.microsoft.com
 ENV SING_BOX_LOG_LEVEL=info
 
-# Expose ports
 EXPOSE ${SING_BOX_PORT}
 EXPOSE ${SING_BOX_HEALTH_PORT}
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -sf http://localhost:${SING_BOX_HEALTH_PORT}/health || exit 1
+    CMD wget -q --spider http://localhost:${SING_BOX_HEALTH_PORT}/health || exit 1
 
-# Use tini for signal handling
-ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/app/start.sh"]
