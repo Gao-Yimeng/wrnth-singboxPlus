@@ -21,7 +21,7 @@
     ],
     "rules": [
       {
-        "outbound": ["any"],
+        "outbound": "any",
         "server": "dns-direct"
       }
     ],
@@ -38,20 +38,19 @@
       "sniff_override_destination": true,
       "users": [
         {
-          "uuid": "524bd2ea-9579-4b31-b4ed-480ab6068578",
-          "name": "user1"
+          "uuid": "524bd2ea-9579-4b31-b4ed-480ab6068578"
         }
       ],
-      "tls": {
-        "enabled": true,
-        "certificate_path": "/app/cert/fullchain.pem",
-        "key_path": "/app/cert/key.pem"
-      },
       "transport": {
         "type": "ws",
         "path": "/chat",
         "max_early_data": 2048,
         "early_data_header_name": "Sec-WebSocket-Protocol"
+      },
+      "tls": {
+        "enabled": true,
+        "certificate_path": "/app/cert/fullchain.pem",
+        "key_path": "/app/cert/key.pem"
       }
     }
   ],
@@ -78,9 +77,7 @@
     "v2ray_api": {
       "listen": "127.0.0.1:10085",
       "stats": {
-        "enabled": true,
-        "stats_inbound_uplink": true,
-        "stats_inbound_downlink": true
+        "enabled": true
       }
     }
   }
