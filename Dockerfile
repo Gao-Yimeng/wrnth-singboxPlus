@@ -1,15 +1,17 @@
-FROM alpine:3.20
+FROM debian:bookworm-slim
 
-# Install runtime dependencies
-RUN apk add --no-cache socat openssl curl tini jq
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    socat openssl curl tini jq \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN addgroup -g 1000 -S appgroup && \
-    adduser -u 1000 -S appuser -G appgroup
+RUN groupadd -g 1000 appgroup && \
+    useradd -u 1000 -g appgroup -s /bin/false appuser
 
 WORKDIR /app
 
-# Copy sing-box binary directly (no download needed)
+# Copy sing-box binary
 COPY sing-box /usr/local/bin/sing-box
 RUN chmod +x /usr/local/bin/sing-box
 
