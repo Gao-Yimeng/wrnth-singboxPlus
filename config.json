@@ -7,13 +7,11 @@
   "dns": {
     "servers": [
       {
-        "type": "dns",
         "tag": "dns-direct",
         "address": "223.5.5.5",
         "strategy": "ipv4_only"
       },
       {
-        "type": "dns",
         "tag": "dns-proxy",
         "address": "tls://8.8.8.8",
         "strategy": "ipv4_only"
