@@ -7,12 +7,6 @@
   "dns": {
     "servers": [
       {
-        "tag": "dns-direct",
-        "address": "223.5.5.5",
-        "address_resolver": "dns-proxy",
-        "strategy": "ipv4_only"
-      },
-      {
         "tag": "dns-proxy",
         "address": "tls://8.8.8.8",
         "strategy": "ipv4_only"
@@ -48,8 +42,7 @@
   "outbounds": [
     {
       "type": "direct",
-      "tag": "direct",
-      "domain_resolver": "dns-direct"
+      "tag": "direct"
     }
   ],
   "route": {
