@@ -1,12 +1,12 @@
 #!/bin/sh
 export ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true
 export ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true
+export ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER=true
 
 echo "[start.sh] Sing-Box Plus Docker Edition starting..."
 echo "[start.sh] SING_BOX_PORT=${SING_BOX_PORT:-31080}"
 echo "[start.sh] SING_BOX_HEALTH_PORT=${SING_BOX_HEALTH_PORT:-31081}"
 
-# Generate TLS certificate if not exists
 CERT_DIR="/app/cert"
 mkdir -p "$CERT_DIR"
 CRT="$CERT_DIR/fullchain.pem"
@@ -25,7 +25,6 @@ if [ ! -s "$CRT" ] || [ ! -s "$KEY" ]; then
 fi
 
 echo "[start.sh] Using static config.json"
-
 echo "[start.sh] Step 1/2: Validating config..."
 if sing-box check -c /app/config.json 2>/dev/null; then
     echo "[start.sh] Config validation passed"
