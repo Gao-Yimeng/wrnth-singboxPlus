@@ -1,30 +1,7 @@
-# ================================================================
-#  Sing-Box Plus — Docker Container Edition
-#  Inspired by: https://github.com/Alvin9999-newpac/Sing-Box-Plus
-#  Target: Back4App Containers deployment
-# ================================================================
+FROM alpine:3.20
 
-# ---- Stage 1: Build ----
-FROM alpine:3.20 AS builder
-
-RUN apk add --no-cache wget tar jq openssl
-
-ARG SING_BOX_VERSION=1.13.14
-ARG TARGETARCH=amd64
-
-WORKDIR /build
-
-# Download sing-box binary matching the target architecture
-RUN wget -q "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-${TARGETARCH}.tar.gz" \
-    && tar -xzf "sing-box-${SING_BOX_VERSION}-linux-${TARGETARCH}.tar.gz" \
-    && mv "sing-box-${SING_BOX_VERSION}-linux-${TARGETARCH}/sing-box" ./sing-box \
-    && chmod +x sing-box \
-    && rm -rf "sing-box-${SING_BOX_VERSION}-linux-${TARGETARCH}"*
-
-# ---- Stage 2: Runtime ----
-FROM alpine:3.20 AS runtime
-
-RUN apk add --no-cache socat openssl curl tini jq
+# Install all dependencies including build tools
+RUN apk add --no-cache wget tar jq socat openssl curl tini
 
 # Create non-root user
 RUN addgroup -g 1000 -S appgroup && \
@@ -32,9 +9,15 @@ RUN addgroup -g 1000 -S appgroup && \
 
 WORKDIR /app
 
-# Copy sing-box binary from builder
-COPY --from=builder /build/sing-box /usr/local/bin/sing-box
-RUN chmod +x /usr/local/bin/sing-box
+# Sing-box version
+ARG SING_BOX_VERSION=1.13.14
+
+# Download and install sing-box binary
+RUN wget -q "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
+    && tar -xzf "sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
+    && mv "sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" ./sing-box \
+    && chmod +x sing-box \
+    && rm -rf "sing-box-${SING_BOX_VERSION}-linux-amd64"*
 
 # Copy application files
 COPY NOTICE.txt .
@@ -50,7 +33,7 @@ RUN mkdir -p /app/data /app/cert && chown -R appuser:appgroup /app
 # Switch to non-root user
 USER appuser
 
-# Environment variables (can be overridden by Back4App container settings)
+# Environment variables
 ENV SING_BOX_PORT=31080
 ENV SING_BOX_UUID=524bd2ea-9579-4b31-b4ed-480ab6068578
 ENV SING_BOX_PROTOCOL=vless
@@ -59,14 +42,14 @@ ENV SING_BOX_HEALTH_PORT=31081
 ENV SING_BOX_REALITY_SERVER=www.microsoft.com
 ENV SING_BOX_LOG_LEVEL=info
 
-# Expose proxy port and health check port
+# Expose ports
 EXPOSE ${SING_BOX_PORT}
 EXPOSE ${SING_BOX_HEALTH_PORT}
 
-# Health check for container orchestration
+# Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -sf http://localhost:${SING_BOX_HEALTH_PORT}/health || exit 1
 
-# Use tini as init system for proper signal handling
+# Use tini for signal handling
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["/app/start.sh"]
