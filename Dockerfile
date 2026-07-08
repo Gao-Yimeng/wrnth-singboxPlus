@@ -1,21 +1,17 @@
 FROM alpine:3.20
 
-# Install dependencies
-RUN apk add --no-cache wget tar jq openssl
+# Install runtime dependencies
+RUN apk add --no-cache socat openssl curl tini jq
 
-# Sing-box version
-ARG SING_BOX_VERSION=1.13.14
+# Create non-root user
+RUN addgroup -g 1000 -S appgroup && \
+    adduser -u 1000 -S appuser -G appgroup
 
 WORKDIR /app
 
-# Download sing-box (verbose to catch errors)
-RUN wget "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
-    && ls -la sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz \
-    && tar -xzf sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz \
-    && ls -la sing-box-${SING_BOX_VERSION}-linux-amd64/ \
-    && mv sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box ./sing-box \
-    && chmod +x sing-box \
-    && rm -rf sing-box-${SING_BOX_VERSION}-linux-amd64*
+# Copy sing-box binary directly (no download needed)
+COPY sing-box /usr/local/bin/sing-box
+RUN chmod +x /usr/local/bin/sing-box
 
 # Copy NOTICE
 COPY NOTICE.txt .
@@ -26,13 +22,9 @@ COPY generate_config.sh .
 RUN chmod +x /app/start.sh /app/generate_config.sh
 
 # Create runtime dirs
-RUN mkdir -p /app/data /app/cert
+RUN mkdir -p /app/data /app/cert && chown -R appuser:appgroup /app
 
-# Create non-root user
-RUN addgroup -g 1000 -S appgroup && \
-    adduser -u 1000 -S appuser -G appgroup && \
-    chown -R appuser:appgroup /app
-
+# Switch to non-root user
 USER appuser
 
 # Environment variables
