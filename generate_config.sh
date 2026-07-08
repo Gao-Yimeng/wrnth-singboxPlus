@@ -1,13 +1,12 @@
 #!/bin/sh
 # ================================================================
 #  generate_config.sh — Generate config.json from environment
-#  Inspired by Sing-Box-Plus write_config() jq template pattern
-#  Reads env vars → generates a complete sing-box config
+#  Compatible with sing-box v1.13.x (new inbound format)
 # ================================================================
 
 set -e
 
-# ---- Defaults (mirrors Sing-Box-Plus constants) ----
+# ---- Defaults ----
 : "${SING_BOX_PORT:=31080}"
 : "${SING_BOX_UUID:=524bd2ea-9579-4b31-b4ed-480ab6068578}"
 : "${SING_BOX_PROTOCOL:=vless}"
@@ -17,10 +16,9 @@ set -e
 : "${CERT_DIR:=/app/cert}"
 : "${DATA_DIR:=/app/data}"
 
-# ---- Ensure directories exist ----
 mkdir -p "$CERT_DIR" "$DATA_DIR"
 
-# ---- Generate self-signed certificate (mirrors Sing-Box-Plus mk_cert()) ----
+# ---- Generate self-signed certificate ----
 CRT="$CERT_DIR/fullchain.pem"
 KEY="$CERT_DIR/key.pem"
 
@@ -35,44 +33,15 @@ if [ ! -s "$CRT" ] || [ ! -s "$KEY" ]; then
     echo "[generate_config] Certificate generated: $CRT"
 fi
 
-# ---- Determine protocol type from SING_BOX_PROTOCOL ----
-PROTO="$(echo "$SING_BOX_PROTOCOL" | tr '[:upper:]' '[:lower:]')"  # lowercase
-
-# ---- Build config using jq (mirrors Sing-Box-Plus write_config jq pattern) ----
-export ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true
-export ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true
+# ---- Build config using jq ----
 jq -n \
   --arg port "$SING_BOX_PORT" \
   --arg uuid "$SING_BOX_UUID" \
-  --arg proto "$PROTO" \
   --arg ws_path "$SING_BOX_WS_PATH" \
   --arg cert "$CRT" \
   --arg key "$KEY" \
   --arg log_level "$SING_BOX_LOG_LEVEL" \
-  --arg reality_server "$SING_BOX_REALITY_SERVER" \
   '
-  # Helper: define VLESS inbound with WebSocket + TLS
-  def inbound_vless_ws($port): {
-    type: "vless",
-    tag: "vless-ws-in",
-    listen: "::",
-    listen_port: ($port | tonumber),
-    sniff: true,
-    sniff_override_destination: true,
-    users: [{ uuid: $uuid }],
-    tls: {
-      enabled: true,
-      certificate_path: $cert,
-      key_path: $key
-    },
-    transport: {
-      type: "ws",
-      path: $ws_path,
-      max_early_data: 2048,
-      early_data_header_name: "Sec-WebSocket-Protocol"
-    }
-  };
-
   {
     log: {
       disabled: false,
@@ -104,7 +73,26 @@ jq -n \
       strategy: "ipv4_only"
     },
     inbounds: [
-      inbound_vless_ws($port)
+      {
+        type: "vless",
+        tag: "vless-ws-in",
+        listen: "::",
+        listen_port: ($port | tonumber),
+        sniff: true,
+        sniff_override_destination: true,
+        users: [{ uuid: $uuid }],
+        tls: {
+          enabled: true,
+          certificate_path: $cert,
+          key_path: $key
+        },
+        transport: {
+          type: "ws",
+          path: $ws_path,
+          max_early_data: 2048,
+          early_data_header_name: "Sec-WebSocket-Protocol"
+        }
+      }
     ],
     outbounds: [
       { type: "direct", tag: "direct" },
