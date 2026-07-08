@@ -3,6 +3,10 @@
 #  start.sh — Entry point for sing-box in Docker container
 # ================================================================
 
+# Set deprecated env var for sing-box v1.13.x compatibility
+export ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true
+export ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true
+
 echo "[start.sh] Sing-Box Plus Docker Edition starting..."
 echo "[start.sh] SING_BOX_PORT=${SING_BOX_PORT:-31080}"
 echo "[start.sh] SING_BOX_HEALTH_PORT=${SING_BOX_HEALTH_PORT:-31081}"
@@ -26,7 +30,6 @@ fi
 # ---- Step 3: Start health check server on separate port ----
 echo "[start.sh] Step 3/4: Starting health check server on port ${SING_BOX_HEALTH_PORT:-31081}..."
 
-# Background: simple TCP echo that responds with HTTP 200
 (while true; do
     echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nOK" | \
     nc -l -p ${SING_BOX_HEALTH_PORT:-31081} -w 2 >/dev/null 2>&1 || true
